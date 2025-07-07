@@ -1,6 +1,6 @@
-import assert from 'node:assert/strict';
-import { describe, test } from 'node:test';
-import { parseArgs } from 'node:util';
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
+import { parseArgs } from 'node:util'
 
 describe('CLI Argument Parsing', () => {
   test('parseArgs handles basic arguments', () => {
@@ -12,11 +12,11 @@ describe('CLI Argument Parsing', () => {
         verbose: { type: 'boolean', short: 'v' },
       },
       allowPositionals: true,
-    });
+    })
 
-    assert.equal(positionals[0], 'owner/repo');
-    assert.equal(positionals[1], 'v1.0.0');
-  });
+    assert.equal(positionals[0], 'owner/repo')
+    assert.equal(positionals[1], 'v1.0.0')
+  })
 
   test('parseArgs handles short flags', () => {
     const { values } = parseArgs({
@@ -27,12 +27,12 @@ describe('CLI Argument Parsing', () => {
         verbose: { type: 'boolean', short: 'v' },
       },
       allowPositionals: true,
-    });
+    })
 
-    assert.equal(values['bin-name'], 'custom-bin');
-    assert.equal(values.output, './custom-output');
-    assert.equal(values.verbose, true);
-  });
+    assert.equal(values['bin-name'], 'custom-bin')
+    assert.equal(values.output, './custom-output')
+    assert.equal(values.verbose, true)
+  })
 
   test('parseArgs handles long flags', () => {
     const { values } = parseArgs({
@@ -49,29 +49,29 @@ describe('CLI Argument Parsing', () => {
         verbose: { type: 'boolean', short: 'v' },
       },
       allowPositionals: true,
-    });
+    })
 
-    assert.equal(values['bin-name'], 'custom-bin');
-    assert.equal(values.output, './custom-output');
-    assert.equal(values.verbose, true);
-  });
+    assert.equal(values['bin-name'], 'custom-bin')
+    assert.equal(values.output, './custom-output')
+    assert.equal(values.verbose, true)
+  })
 
   test('parseArgs handles platform-map JSON', () => {
-    const platformMap = '{"darwin-x64":"app-macos.tar.gz"}';
+    const platformMap = '{"darwin-x64":"app-macos.tar.gz"}'
     const { values } = parseArgs({
       args: ['--platform-map', platformMap],
       options: {
         'platform-map': { type: 'string', short: 'p' },
       },
       allowPositionals: true,
-    });
+    })
 
-    assert.equal(values['platform-map'], platformMap);
+    assert.equal(values['platform-map'], platformMap)
 
     // Test JSON parsing
-    const parsed = JSON.parse(values['platform-map']);
-    assert.equal(parsed['darwin-x64'], 'app-macos.tar.gz');
-  });
+    const parsed = JSON.parse(values['platform-map'])
+    assert.equal(parsed['darwin-x64'], 'app-macos.tar.gz')
+  })
 
   test('parseArgs handles mixed positional and option args', () => {
     const { values, positionals } = parseArgs({
@@ -81,11 +81,11 @@ describe('CLI Argument Parsing', () => {
         verbose: { type: 'boolean', short: 'v' },
       },
       allowPositionals: true,
-    });
+    })
 
-    assert.equal(positionals[0], 'owner/repo');
-    assert.equal(positionals[1], 'v1.0.0');
-    assert.equal(values.output, './bin');
-    assert.equal(values.verbose, true);
-  });
-});
+    assert.equal(positionals[0], 'owner/repo')
+    assert.equal(positionals[1], 'v1.0.0')
+    assert.equal(values.output, './bin')
+    assert.equal(values.verbose, true)
+  })
+})

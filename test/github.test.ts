@@ -1,6 +1,6 @@
-import assert from 'node:assert/strict';
-import { describe, test } from 'node:test';
-import { fetchReleaseInfo } from './github.js';
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
+import { fetchReleaseInfo } from '../src/github.js'
 
 const mockReleaseData = {
   tag_name: 'v0.20.0',
@@ -18,7 +18,7 @@ const mockReleaseData = {
       size: 16777216,
     },
   ],
-};
+}
 
 describe('GitHub API Integration', () => {
   test('fetchReleaseInfo returns release data for valid repo/version', async (t) => {
@@ -30,25 +30,25 @@ describe('GitHub API Integration', () => {
         return {
           ok: true,
           json: async () => mockReleaseData,
-        } as Response;
+        } as Response
       }
-      throw new Error('Unexpected fetch call');
-    });
+      throw new Error('Unexpected fetch call')
+    })
 
-    const release = await fetchReleaseInfo('getzola/zola', 'v0.20.0');
+    const release = await fetchReleaseInfo('getzola/zola', 'v0.20.0')
 
-    assert.equal(typeof release.tag_name, 'string');
-    assert.equal(release.tag_name, 'v0.20.0');
-    assert.equal(Array.isArray(release.assets), true);
-    assert.equal(release.assets.length > 0, true);
+    assert.equal(typeof release.tag_name, 'string')
+    assert.equal(release.tag_name, 'v0.20.0')
+    assert.equal(Array.isArray(release.assets), true)
+    assert.equal(release.assets.length > 0, true)
 
     // Check asset structure
-    const asset = release.assets[0];
-    assert.equal(typeof asset.name, 'string');
-    assert.equal(typeof asset.download_url, 'string');
-    assert.equal(typeof asset.size, 'number');
-    assert.equal(asset.download_url.startsWith('https://'), true);
-  });
+    const asset = release.assets[0]
+    assert.equal(typeof asset.name, 'string')
+    assert.equal(typeof asset.download_url, 'string')
+    assert.equal(typeof asset.size, 'number')
+    assert.equal(asset.download_url.startsWith('https://'), true)
+  })
 
   test('fetchReleaseInfo throws error for non-existent repo', async (t) => {
     t.mock.method(global, 'fetch', async () => {
@@ -56,14 +56,14 @@ describe('GitHub API Integration', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as Response;
-    });
+      } as Response
+    })
 
     await assert.rejects(
       async () => await fetchReleaseInfo('nonexistent/repo', 'v1.0.0'),
       /Release v1.0.0 not found for repository nonexistent\/repo/,
-    );
-  });
+    )
+  })
 
   test('fetchReleaseInfo throws error for non-existent version', async (t) => {
     t.mock.method(global, 'fetch', async () => {
@@ -71,14 +71,14 @@ describe('GitHub API Integration', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as Response;
-    });
+      } as Response
+    })
 
     await assert.rejects(
       async () => await fetchReleaseInfo('getzola/zola', 'v999.999.999'),
       /Release v999.999.999 not found for repository getzola\/zola/,
-    );
-  });
+    )
+  })
 
   test('fetchReleaseInfo handles malformed repo name', async (t) => {
     t.mock.method(global, 'fetch', async () => {
@@ -86,12 +86,12 @@ describe('GitHub API Integration', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as Response;
-    });
+      } as Response
+    })
 
     await assert.rejects(
       async () => await fetchReleaseInfo('invalid-repo-name', 'v1.0.0'),
       /Release v1.0.0 not found for repository invalid-repo-name/,
-    );
-  });
-});
+    )
+  })
+})
