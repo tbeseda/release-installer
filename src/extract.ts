@@ -69,69 +69,110 @@ export async function extractTarGz(
   } | null = null
 
   return new Promise((resolve, reject) => {
+    let isProcessing = false
+    const chunks: Buffer[] = []
+
     const processChunk = async (chunk: Buffer) => {
+      if (isProcessing) {
+        chunks.push(chunk)
+        return
+      }
+
+      isProcessing = true
       buffer = Buffer.concat([buffer, chunk])
 
-      while (buffer.length >= 512) {
-        if (!currentFile) {
-          // Parse header
-          const header = parseTarHeader(buffer.subarray(0, 512))
-          if (!header) {
-            // End of archive or invalid header
-            buffer = buffer.subarray(512)
-            continue
-          }
-
-          if (header.type === 'file' && header.size > 0) {
-            currentFile = { name: header.name, size: header.size }
-            const outputPath = join(resolvedOutputDir, header.name)
-
-            // Ensure directory exists
-            await fs.mkdir(dirname(outputPath), { recursive: true })
-            currentFile.stream = createWriteStream(outputPath)
-          }
-
-          buffer = buffer.subarray(512) // Skip header
-        } else {
-          // Extract file content
-          const remainingSize = currentFile.size
-          const availableData = Math.min(remainingSize, buffer.length)
-
-          if (availableData > 0 && currentFile.stream) {
-            currentFile.stream.write(buffer.subarray(0, availableData))
-            currentFile.size -= availableData
-            buffer = buffer.subarray(availableData)
-          }
-
-          if (currentFile.size === 0) {
-            // File complete
-            if (currentFile.stream) {
-              currentFile.stream.end()
-            }
-            currentFile = null
-
-            // Skip padding to 512-byte boundary
-            const paddingSize = (512 - (availableData % 512)) % 512
-            if (buffer.length >= paddingSize) {
-              buffer = buffer.subarray(paddingSize)
-            }
-          } else if (buffer.length < remainingSize) {
-            // Need more data
-            break
-          }
+      // Process any queued chunks
+      while (chunks.length > 0) {
+        const nextChunk = chunks.shift()
+        if (nextChunk) {
+          buffer = Buffer.concat([buffer, nextChunk])
         }
       }
+
+      try {
+        while (buffer.length >= 512) {
+          if (!currentFile) {
+            // Parse header
+            const header = parseTarHeader(buffer.subarray(0, 512))
+            if (!header) {
+              // End of archive or invalid header
+              buffer = buffer.subarray(512)
+              continue
+            }
+
+            if (header.type === 'file' && header.size > 0) {
+              currentFile = { name: header.name, size: header.size }
+              const outputPath = join(resolvedOutputDir, header.name)
+
+              // Ensure directory exists
+              await fs.mkdir(dirname(outputPath), { recursive: true })
+              currentFile.stream = createWriteStream(outputPath)
+            }
+
+            buffer = buffer.subarray(512) // Skip header
+          } else {
+            // Extract file content
+            const remainingSize = currentFile.size
+            const availableData = Math.min(remainingSize, buffer.length)
+
+            if (availableData > 0 && currentFile.stream) {
+              currentFile.stream.write(buffer.subarray(0, availableData))
+              currentFile.size -= availableData
+              buffer = buffer.subarray(availableData)
+            }
+
+            if (currentFile.size === 0) {
+              // File complete - wait for stream to finish
+              if (currentFile.stream) {
+                await new Promise<void>((streamResolve, streamReject) => {
+                  currentFile?.stream?.once('finish', streamResolve)
+                  currentFile?.stream?.once('error', streamReject)
+                  currentFile?.stream?.end()
+                })
+              }
+              currentFile = null
+
+              // Skip padding to 512-byte boundary
+              const paddingSize = (512 - (availableData % 512)) % 512
+              if (buffer.length >= paddingSize) {
+                buffer = buffer.subarray(paddingSize)
+              }
+            } else if (buffer.length < remainingSize) {
+              // Need more data
+              break
+            }
+          }
+        }
+      } catch (error) {
+        reject(error)
+        return
+      }
+
+      isProcessing = false
     }
 
     gunzip.on('data', (chunk: Buffer) => {
       processChunk(chunk).catch(reject)
     })
 
-    gunzip.on('end', () => {
-      if (currentFile?.stream) {
-        currentFile.stream.end()
+    gunzip.on('end', async () => {
+      try {
+        // Wait for any pending processing
+        while (isProcessing) {
+          await new Promise((resolve) => setTimeout(resolve, 1))
+        }
+
+        if (currentFile?.stream) {
+          await new Promise<void>((streamResolve, streamReject) => {
+            currentFile?.stream?.once('finish', streamResolve)
+            currentFile?.stream?.once('error', streamReject)
+            currentFile?.stream?.end()
+          })
+        }
+        resolve()
+      } catch (error) {
+        reject(error)
       }
-      resolve()
     })
 
     gunzip.on('error', reject)
