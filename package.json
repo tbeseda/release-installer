@@ -1,6 +1,6 @@
 {
   "name": "release-installer",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Simple GitHub release installer.",
   "license": "MIT",
   "author": "tbeseda",
@@ -31,5 +31,16 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   },
-  "keywords": []
+  "keywords": [
+    "github",
+    "release",
+    "installer",
+    "cli",
+    "binary",
+    "download",
+    "extract",
+    "cross-platform",
+    "nodejs",
+    "platform-detection"
+  ]
 }
