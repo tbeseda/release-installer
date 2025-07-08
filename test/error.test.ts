@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict'
+import { access, mkdir, rm, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { describe, test } from 'node:test'
 import { installRelease } from '../src/index.js'
+import { getPlatformInfo } from '../src/platform.js'
 
 describe('Error Handling', () => {
   test('installRelease throws error for invalid repo', async (t) => {
@@ -55,7 +58,6 @@ describe('Error Handling', () => {
 
     // Test with a platform map that points to a non-existent asset
     // The current platform will use the custom mapping and fail to find the asset
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
 
     await assert.rejects(
@@ -104,7 +106,6 @@ describe('Error Handling', () => {
       } as Response
     })
 
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
 
     await assert.rejects(
@@ -139,11 +140,9 @@ describe('Error Handling', () => {
     })
 
     // Get current platform for accurate testing
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
 
     // Create a test directory with an existing binary
-    const { mkdir, writeFile, rm } = await import('node:fs/promises')
     const testDir = './test-force-flag'
     const binaryPath = `${testDir}/app`
 
@@ -203,7 +202,6 @@ describe('Error Handling', () => {
       } as Response
     })
 
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
     const testDir = './test-cleanup-after-failure'
 
@@ -223,8 +221,6 @@ describe('Error Handling', () => {
       assert.equal(downloadCallCount, 1)
 
       // Verify archive was cleaned up (temp file shouldn't exist)
-      const { access } = await import('node:fs/promises')
-      const { join } = await import('node:path')
       const tempPath = join(testDir, 'test-app-v0.20.0-x86_64-apple-darwin.tar.gz')
 
       await assert.rejects(
@@ -233,7 +229,6 @@ describe('Error Handling', () => {
       )
     } finally {
       // Clean up test directory
-      const { rm } = await import('node:fs/promises')
       await rm(testDir, { recursive: true }).catch(() => {})
     }
   })

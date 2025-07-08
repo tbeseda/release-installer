@@ -1,172 +1,21 @@
 import { spawn } from 'node:child_process'
-import { createReadStream, createWriteStream } from 'node:fs'
-import { access, mkdir } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
-import { pipeline } from 'node:stream/promises'
-import { createGunzip } from 'node:zlib'
-
-// Simple tar header parsing (tar format is straightforward)
-interface TarHeader {
-  name: string
-  size: number
-  type: string
-}
-
-function parseTarHeader(buffer: Buffer): TarHeader | null {
-  if (buffer.length < 512) return null
-
-  // Check if this is a valid tar header (not all zeros)
-  const isValid = buffer.subarray(0, 100).some((byte) => byte !== 0)
-  if (!isValid) return null
-
-  // Extract filename (first 100 bytes, null-terminated)
-  const nameBytes = buffer.subarray(0, 100)
-  const nameEnd = nameBytes.indexOf(0)
-  const name = nameBytes.subarray(0, nameEnd > 0 ? nameEnd : 100).toString('utf8')
-
-  // Extract file size (12 bytes at offset 124, octal format)
-  const sizeStr = buffer.subarray(124, 136).toString('utf8').trim().replace(/\0/g, '')
-  const size = sizeStr ? parseInt(sizeStr, 8) : 0
-
-  // Extract file type (1 byte at offset 156)
-  const typeFlag = buffer[156]
-  const type = typeFlag === 48 || typeFlag === 0 ? 'file' : 'directory' // '0' or null for regular file
-
-  return { name, size, type }
-}
+import { mkdir } from 'node:fs/promises'
+import { platform } from 'node:os'
+import { resolve } from 'node:path'
 
 export async function extractTarGz(archivePath: string, outputDir: string): Promise<void> {
-  const resolvedArchivePath = resolve(archivePath)
-  const resolvedOutputDir = resolve(outputDir)
+  await mkdir(outputDir, { recursive: true })
 
-  try {
-    await access(resolvedArchivePath)
-  } catch {
-    throw new Error(`Archive file does not exist: ${resolvedArchivePath}`)
-  }
+  const tarCmd = platform() === 'win32' ? 'tar.exe' : 'tar'
+  const tarArgs = ['-xzf', archivePath, '-C', outputDir]
 
-  await mkdir(resolvedOutputDir, { recursive: true })
-
-  // Create streams for decompression
-  const readStream = createReadStream(resolvedArchivePath)
-  const gunzip = createGunzip()
-
-  let buffer = Buffer.alloc(0)
-  let currentFile: {
-    name: string
-    size: number
-    stream?: NodeJS.WritableStream
-  } | null = null
-
-  return new Promise((resolve, reject) => {
-    let isProcessing = false
-    const chunks: Buffer[] = []
-
-    const processChunk = async (chunk: Buffer) => {
-      if (isProcessing) {
-        chunks.push(chunk)
-        return
-      }
-
-      isProcessing = true
-      buffer = Buffer.concat([buffer, chunk])
-
-      // Process any queued chunks
-      while (chunks.length > 0) {
-        const nextChunk = chunks.shift()
-        if (nextChunk) buffer = Buffer.concat([buffer, nextChunk])
-      }
-
-      try {
-        while (buffer.length >= 512) {
-          if (!currentFile) {
-            // Parse header
-            const header = parseTarHeader(buffer.subarray(0, 512))
-            if (!header) {
-              // End of archive or invalid header
-              buffer = buffer.subarray(512)
-              continue
-            }
-
-            if (header.type === 'file' && header.size > 0) {
-              currentFile = { name: header.name, size: header.size }
-              const outputPath = join(resolvedOutputDir, header.name)
-
-              // Ensure directory exists
-              await mkdir(dirname(outputPath), { recursive: true })
-              currentFile.stream = createWriteStream(outputPath)
-            }
-
-            buffer = buffer.subarray(512) // Skip header
-          } else {
-            // Extract file content
-            const remainingSize = currentFile.size
-            const availableData = Math.min(remainingSize, buffer.length)
-
-            if (availableData > 0 && currentFile.stream) {
-              currentFile.stream.write(buffer.subarray(0, availableData))
-              currentFile.size -= availableData
-              buffer = buffer.subarray(availableData)
-            }
-
-            if (currentFile.size === 0) {
-              // File complete - wait for stream to finish
-              if (currentFile.stream) {
-                await new Promise<void>((streamResolve, streamReject) => {
-                  currentFile?.stream?.once('finish', streamResolve)
-                  currentFile?.stream?.once('error', streamReject)
-                  currentFile?.stream?.end()
-                })
-              }
-              currentFile = null
-
-              // Skip padding to 512-byte boundary
-              const paddingSize = (512 - (availableData % 512)) % 512
-              if (buffer.length >= paddingSize) {
-                buffer = buffer.subarray(paddingSize)
-              }
-            } else if (buffer.length < remainingSize) {
-              // Need more data
-              break
-            }
-          }
-        }
-      } catch (error) {
-        reject(error)
-        return
-      }
-
-      isProcessing = false
-    }
-
-    gunzip.on('data', (chunk: Buffer) => {
-      processChunk(chunk).catch(reject)
+  await new Promise<void>((resolve, reject) => {
+    const proc = spawn(tarCmd, tarArgs, { stdio: 'inherit' })
+    proc.on('close', (code) => {
+      if (code === 0) resolve()
+      else reject(new Error(`${tarCmd} command failed with code ${code}`))
     })
-
-    gunzip.on('end', async () => {
-      try {
-        // Wait for any pending processing
-        while (isProcessing) {
-          await new Promise((resolve) => setTimeout(resolve, 1))
-        }
-
-        if (currentFile?.stream) {
-          await new Promise<void>((streamResolve, streamReject) => {
-            currentFile?.stream?.once('finish', streamResolve)
-            currentFile?.stream?.once('error', streamReject)
-            currentFile?.stream?.end()
-          })
-        }
-        resolve()
-      } catch (error) {
-        reject(error)
-      }
-    })
-
-    gunzip.on('error', reject)
-    readStream.on('error', reject)
-
-    pipeline(readStream, gunzip).catch(reject)
+    proc.on('error', reject)
   })
 }
 
@@ -174,12 +23,6 @@ export async function extractZip(archivePath: string, outputDir: string): Promis
   // Validate paths to prevent command injection
   const resolvedArchivePath = resolve(archivePath)
   const resolvedOutputDir = resolve(outputDir)
-
-  try {
-    await access(resolvedArchivePath)
-  } catch {
-    throw new Error(`Archive file does not exist: ${resolvedArchivePath}`)
-  }
 
   await mkdir(resolvedOutputDir, { recursive: true })
 

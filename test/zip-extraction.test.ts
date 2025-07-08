@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { access, mkdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, test } from 'node:test'
 import { extractZip } from '../src/extract.js'
@@ -26,7 +26,7 @@ describe('Enhanced Zip Extraction Fallbacks', () => {
     const nonExistentPath = './nonexistent/file.zip'
     const outputDir = './test-zip-nonexistent'
 
-    await assert.rejects(async () => await extractZip(nonExistentPath, outputDir), /Archive file does not exist/)
+    await assert.rejects(async () => await extractZip(nonExistentPath, outputDir), /Failed to extract zip file/)
   })
 
   test('creates output directory if it does not exist', async () => {
@@ -45,7 +45,6 @@ describe('Enhanced Zip Extraction Fallbacks', () => {
       )
 
       // Verify output directory was created even though extraction failed
-      const { access } = await import('node:fs/promises')
       await access(outputDir) // Should not throw
 
       assert.ok(true, 'Created output directory before attempting extraction')

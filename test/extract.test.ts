@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { access, mkdir, rm, writeFile } from 'node:fs/promises'
+import { access, mkdir, rm, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, test } from 'node:test'
 import { extractArchive } from '../src/extract.js'
@@ -84,7 +84,6 @@ describe('Archive Extraction', () => {
       await rm(testDir, { recursive: true })
     } catch {}
     try {
-      const { unlink } = await import('node:fs/promises')
       await unlink(archivePath)
     } catch {}
   })

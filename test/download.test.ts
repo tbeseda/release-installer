@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { rm } from 'node:fs/promises'
+import { access, readFile, rm } from 'node:fs/promises'
 import { describe, test } from 'node:test'
 import { downloadAsset } from '../src/github.js'
 
@@ -71,7 +71,6 @@ describe('Streaming Download Error Handling', () => {
       )
 
       // Verify file was cleaned up after error
-      const { access } = await import('node:fs/promises')
       await assert.rejects(
         async () => await access(testFile),
         // File should not exist (cleaned up)
@@ -133,7 +132,6 @@ describe('Streaming Download Error Handling', () => {
       await downloadAsset('https://example.com/file.txt', testFile)
 
       // Verify file was created and contains expected content
-      const { readFile } = await import('node:fs/promises')
       const content = await readFile(testFile)
       assert.deepEqual(content, testData)
     } finally {

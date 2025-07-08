@@ -3,6 +3,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, test } from 'node:test'
 import { installRelease } from '../src/index.js'
+import { getPlatformInfo } from '../src/platform.js'
 
 describe('Binary Search Optimization', () => {
   test('finds binary in root directory (fast path)', async (t) => {
@@ -61,7 +62,6 @@ describe('Binary Search Optimization', () => {
       } as Response
     })
 
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
     const testDir = './test-binary-root'
 
@@ -142,7 +142,6 @@ describe('Binary Search Optimization', () => {
       } as Response
     })
 
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
     const testDir = './test-binary-subdir'
 
@@ -230,7 +229,6 @@ describe('Binary Search Optimization', () => {
       } as Response
     })
 
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
     const testDir = './test-binary-not-found'
 
@@ -291,7 +289,6 @@ describe('Binary Search Optimization', () => {
       } as Response
     })
 
-    const { getPlatformInfo } = await import('../src/platform.js')
     const currentPlatform = getPlatformInfo()
     const testDir = './test-binary-exe'
 

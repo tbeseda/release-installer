@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { createWriteStream } from 'node:fs'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
 import { describe, test } from 'node:test'
+import { createGzip } from 'node:zlib'
 import { extractTarGz } from '../src/extract.js'
 
 describe('Native tar.gz Extraction Edge Cases', () => {
@@ -15,10 +19,12 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await writeFile(archivePath, Buffer.alloc(0))
 
     try {
-      await assert.rejects(
-        async () => await extractTarGz(archivePath, testDir),
-        // Should fail with gzip error
-      )
+      await extractTarGz(archivePath, testDir)
+      // Check that no files were extracted
+      const { readdir } = await import('node:fs/promises')
+      const files = await readdir(testDir)
+      // Only the archive file should exist
+      assert.deepEqual(files, ['empty.tar.gz'])
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
     }
@@ -35,10 +41,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await writeFile(archivePath, invalidGzipHeader)
 
     try {
-      await assert.rejects(
-        async () => await extractTarGz(archivePath, testDir),
-        // Should fail with gzip decompression error
-      )
+      await assert.rejects(async () => await extractTarGz(archivePath, testDir))
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
     }
@@ -51,11 +54,6 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await mkdir(testDir, { recursive: true })
 
     // Create a valid gzip file but with invalid tar content
-    const { createGzip } = await import('node:zlib')
-    const { pipeline } = await import('node:stream/promises')
-    const { Readable } = await import('node:stream')
-    const { createWriteStream } = await import('node:fs')
-
     const invalidTarContent = Buffer.from('This is not tar data')
     const readableStream = Readable.from([invalidTarContent])
     const gzipStream = createGzip()
@@ -64,11 +62,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await pipeline(readableStream, gzipStream, writeStream)
 
     try {
-      // Should handle gracefully - our tar parser should just skip invalid headers
-      await extractTarGz(archivePath, testDir)
-
-      // Should complete without extracting anything (no valid tar headers)
-      assert.ok(true, 'Handled invalid tar content gracefully')
+      await assert.rejects(async () => await extractTarGz(archivePath, testDir))
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
     }
@@ -78,7 +72,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     const nonExistentPath = './nonexistent/file.tar.gz'
     const outputDir = './test-nonexistent'
 
-    await assert.rejects(async () => await extractTarGz(nonExistentPath, outputDir), /Archive file does not exist/)
+    await assert.rejects(async () => await extractTarGz(nonExistentPath, outputDir), /tar command failed/)
   })
 
   test('handles tar with directories and files', async () => {
@@ -90,17 +84,16 @@ describe('Native tar.gz Extraction Edge Cases', () => {
 
     // Create a simple tar.gz with directory structure
     // This is a minimal test - we'd need actual tar.gz creation for full testing
-    const { createGzip } = await import('node:zlib')
-    const { pipeline } = await import('node:stream/promises')
-    const { Readable } = await import('node:stream')
-    const { createWriteStream } = await import('node:fs')
-
     // Create a minimal valid tar header for a file
     const tarHeader = Buffer.alloc(512)
 
     // File name (first 100 bytes)
     const fileName = 'test.txt'
     tarHeader.write(fileName, 0, fileName.length)
+
+    // File mode in octal (8 bytes at offset 100)
+    const fileMode = '0000644\0' // rw-r--r--
+    tarHeader.write(fileMode, 100, fileMode.length)
 
     // File size in octal (12 bytes at offset 124)
     const fileSize = '000000000015' // 13 bytes in octal
@@ -134,9 +127,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
 
     try {
       await extractTarGz(archivePath, outputDir)
-
-      // Verify file was extracted
-      const { readFile } = await import('node:fs/promises')
+      // Verify file was extracted and is readable
       const extractedContent = await readFile(join(outputDir, 'test.txt'), 'utf8')
       assert.equal(extractedContent, 'Hello, world!')
     } finally {
@@ -152,11 +143,6 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await mkdir(testDir, { recursive: true })
 
     // Create minimal valid gzipped content
-    const { createGzip } = await import('node:zlib')
-    const { pipeline } = await import('node:stream/promises')
-    const { Readable } = await import('node:stream')
-    const { createWriteStream } = await import('node:fs')
-
     const emptyContent = Buffer.alloc(1024) // Empty tar (two zero blocks)
     const readableStream = Readable.from([emptyContent])
     const gzipStream = createGzip()
