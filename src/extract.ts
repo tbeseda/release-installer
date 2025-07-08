@@ -10,10 +10,21 @@ export async function extractTarGz(archivePath: string, outputDir: string): Prom
   const tarArgs = ['-xzf', archivePath, '-C', outputDir]
 
   await new Promise<void>((resolve, reject) => {
-    const proc = spawn(tarCmd, tarArgs, { stdio: 'inherit' })
+    const proc = spawn(tarCmd, tarArgs, { stdio: ['ignore', 'pipe', 'pipe'] })
+    let stderr = ''
+
+    proc.stderr?.on('data', (data) => {
+      stderr += data.toString()
+    })
+
     proc.on('close', (code) => {
-      if (code === 0) resolve()
-      else reject(new Error(`${tarCmd} command failed with code ${code}`))
+      if (code === 0) {
+        resolve()
+      } else {
+        // Include stderr in error message for better debugging
+        const errorMsg = stderr.trim() || `${tarCmd} command failed with code ${code}`
+        reject(new Error(errorMsg))
+      }
     })
     proc.on('error', reject)
   })

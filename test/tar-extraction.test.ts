@@ -41,7 +41,10 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await writeFile(archivePath, invalidGzipHeader)
 
     try {
-      await assert.rejects(async () => await extractTarGz(archivePath, testDir))
+      await assert.rejects(
+        async () => await extractTarGz(archivePath, testDir),
+        /No files extracted from archive|tar command failed|Error opening archive/,
+      )
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
     }
@@ -62,7 +65,10 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await pipeline(readableStream, gzipStream, writeStream)
 
     try {
-      await assert.rejects(async () => await extractTarGz(archivePath, testDir))
+      await assert.rejects(
+        async () => await extractTarGz(archivePath, testDir),
+        /No files extracted from archive|tar command failed|Error opening archive/,
+      )
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
     }
@@ -72,7 +78,10 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     const nonExistentPath = './nonexistent/file.tar.gz'
     const outputDir = './test-nonexistent'
 
-    await assert.rejects(async () => await extractTarGz(nonExistentPath, outputDir), /tar command failed/)
+    await assert.rejects(
+      async () => await extractTarGz(nonExistentPath, outputDir),
+      /tar command failed|Failed to open/,
+    )
   })
 
   test('handles tar with directories and files', async () => {
