@@ -43,7 +43,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     try {
       await assert.rejects(
         async () => await extractTarGz(archivePath, testDir),
-        /No files extracted from archive|tar command failed|Error opening archive/,
+        /tar command failed: Invalid archive format/,
       )
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
@@ -67,7 +67,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     try {
       await assert.rejects(
         async () => await extractTarGz(archivePath, testDir),
-        /No files extracted from archive|tar command failed|Error opening archive/,
+        /tar command failed: Invalid archive format/,
       )
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
@@ -80,7 +80,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
 
     await assert.rejects(
       async () => await extractTarGz(nonExistentPath, outputDir),
-      /tar command failed|Failed to open/,
+      /tar command failed: File not found/,
     )
   })
 

@@ -19,10 +19,7 @@ describe('Archive Extraction', () => {
       await extractArchive(archivePath, testDir)
     } catch (error) {
       // Expected to fail with gzip/tar error from our native implementation
-      assert.match(
-        (error as Error).message,
-        /tar command failed|Failed to extract|incorrect header check|Error opening archive/,
-      )
+      assert.match((error as Error).message, /tar command failed: Invalid archive format/)
     }
 
     // Clean up
