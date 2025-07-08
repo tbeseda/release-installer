@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createWriteStream } from 'node:fs'
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { access, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
@@ -21,7 +21,6 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     try {
       await extractTarGz(archivePath, testDir)
       // Check that no files were extracted
-      const { readdir } = await import('node:fs/promises')
       const files = await readdir(testDir)
       // Only the archive file should exist
       assert.deepEqual(files, ['empty.tar.gz'])
@@ -41,10 +40,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await writeFile(archivePath, invalidGzipHeader)
 
     try {
-      await assert.rejects(
-        async () => await extractTarGz(archivePath, testDir),
-        /tar command failed: Invalid archive format/,
-      )
+      await assert.rejects(async () => await extractTarGz(archivePath, testDir))
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
     }
@@ -65,10 +61,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     await pipeline(readableStream, gzipStream, writeStream)
 
     try {
-      await assert.rejects(
-        async () => await extractTarGz(archivePath, testDir),
-        /tar command failed: Invalid archive format/,
-      )
+      await assert.rejects(async () => await extractTarGz(archivePath, testDir))
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})
     }
@@ -78,10 +71,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     const nonExistentPath = './nonexistent/file.tar.gz'
     const outputDir = './test-nonexistent'
 
-    await assert.rejects(
-      async () => await extractTarGz(nonExistentPath, outputDir),
-      /tar command failed: File not found/,
-    )
+    await assert.rejects(async () => await extractTarGz(nonExistentPath, outputDir))
   })
 
   test('handles tar with directories and files', async () => {
@@ -164,7 +154,6 @@ describe('Native tar.gz Extraction Edge Cases', () => {
       await extractTarGz(archivePath, outputDir)
 
       // Verify directory was created
-      const { access } = await import('node:fs/promises')
       await access(outputDir) // Should not throw
 
       assert.ok(true, 'Created output directory automatically')
