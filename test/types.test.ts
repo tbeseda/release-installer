@@ -16,12 +16,6 @@ test('matchAssetName should match platform patterns', () => {
     combined: 'darwin-x64',
   }
 
-  assert.equal(
-    matchAssetName('app-v1.0.0-x86_64-apple-darwin.tar.gz', platformInfo),
-    true,
-  )
-  assert.equal(
-    matchAssetName('app-v1.0.0-x86_64-unknown-linux-gnu.tar.gz', platformInfo),
-    false,
-  )
+  assert.equal(matchAssetName('app-v1.0.0-x86_64-apple-darwin.tar.gz', platformInfo), true)
+  assert.equal(matchAssetName('app-v1.0.0-x86_64-unknown-linux-gnu.tar.gz', platformInfo), false)
 })

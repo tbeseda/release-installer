@@ -251,11 +251,7 @@ describe('Binary Search Optimization', () => {
       const warningMessages = consoleMessages.filter(
         (msg) => msg.includes('Warning: Binary') && msg.includes('not found'),
       )
-      assert.equal(
-        warningMessages.length,
-        1,
-        'Should log warning when binary not found',
-      )
+      assert.equal(warningMessages.length, 1, 'Should log warning when binary not found')
     } finally {
       console.log = originalConsoleLog
       await rm(testDir, { recursive: true }).catch(() => {})
@@ -320,10 +316,7 @@ describe('Binary Search Optimization', () => {
         // If zip extraction fails (expected on non-Windows), that's still a valid test
         // since we're mainly testing the asset download and binary naming logic
         if (error.message.includes('Failed to extract zip file')) {
-          assert.ok(
-            true,
-            'Test completed - zip extraction not available on this platform',
-          )
+          assert.ok(true, 'Test completed - zip extraction not available on this platform')
         } else {
           throw error // Re-throw unexpected errors
         }

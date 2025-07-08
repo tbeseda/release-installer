@@ -16,11 +16,7 @@ describe('Streaming Download Error Handling', () => {
 
     try {
       await assert.rejects(
-        async () =>
-          await downloadAsset(
-            'https://example.com/file.tar.gz',
-            './test-null-body.tar.gz',
-          ),
+        async () => await downloadAsset('https://example.com/file.tar.gz', './test-null-body.tar.gz'),
         /Response body is empty/,
       )
     } finally {
@@ -41,11 +37,7 @@ describe('Streaming Download Error Handling', () => {
 
     try {
       await assert.rejects(
-        async () =>
-          await downloadAsset(
-            'https://example.com/file.tar.gz',
-            './test-undefined-body.tar.gz',
-          ),
+        async () => await downloadAsset('https://example.com/file.tar.gz', './test-undefined-body.tar.gz'),
         /Response body is empty/,
       )
     } finally {
@@ -74,8 +66,7 @@ describe('Streaming Download Error Handling', () => {
 
     try {
       await assert.rejects(
-        async () =>
-          await downloadAsset('https://example.com/file.tar.gz', testFile),
+        async () => await downloadAsset('https://example.com/file.tar.gz', testFile),
         /Failed to download asset: Stream interrupted/,
       )
 
@@ -104,11 +95,7 @@ describe('Streaming Download Error Handling', () => {
 
     try {
       await assert.rejects(
-        async () =>
-          await downloadAsset(
-            'https://example.com/nonexistent.tar.gz',
-            './test-404.tar.gz',
-          ),
+        async () => await downloadAsset('https://example.com/nonexistent.tar.gz', './test-404.tar.gz'),
         /Failed to download asset: 404 Not Found/,
       )
     } finally {
@@ -164,11 +151,7 @@ describe('Streaming Download Error Handling', () => {
 
     try {
       await assert.rejects(
-        async () =>
-          await downloadAsset(
-            'https://example.com/file.tar.gz',
-            './test-network-error.tar.gz',
-          ),
+        async () => await downloadAsset('https://example.com/file.tar.gz', './test-network-error.tar.gz'),
         /ECONNRESET: Connection reset by peer/,
       )
     } finally {

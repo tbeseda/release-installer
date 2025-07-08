@@ -17,7 +17,8 @@ const { values, positionals } = parseArgs({
 })
 
 if (values.help) {
-  console.log(`
+  console.log(
+    `
 Usage: release-installer <owner/repo> <version> [options]
 
 Options:
@@ -31,11 +32,13 @@ Options:
 Examples:
   release-installer getzola/zola v0.20.0
   release-installer getzola/zola v0.20.0 --bin-name=zola --output=./bin
-  `)
+    `.trim(),
+  )
   process.exit(0)
 }
 
 const [repo, version] = positionals
+const { 'bin-name': binName, output: outputDir, force, verbose } = values
 
 if (!repo || !version) {
   console.error('Error: Both repository and version are required')
@@ -49,7 +52,7 @@ try {
   if (values['platform-map']) {
     try {
       platformMap = JSON.parse(values['platform-map'])
-    } catch (_parseError) {
+    } catch {
       console.error('Error: Invalid JSON in platform-map parameter')
       console.error('Expected format: {"platform-arch": "asset-name"}')
       process.exit(1)
@@ -57,11 +60,11 @@ try {
   }
 
   await installRelease(repo, version, {
-    binName: values['bin-name'],
-    outputDir: values.output,
+    binName,
+    outputDir,
     platformMap,
-    force: values.force,
-    verbose: values.verbose,
+    force,
+    verbose,
   })
 } catch (error) {
   console.error('Error:', error instanceof Error ? error.message : error)

@@ -20,6 +20,7 @@
   "scripts": {
     "lint": "biome check --write .",
     "build": "rm -rf dist && tsc",
+    "postbuild": "chmod +x dist/cli.js",
     "test": "tsx --test",
     "posttest": "npm run lint",
     "prepublishOnly": "npm run build"

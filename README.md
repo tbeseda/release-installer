@@ -2,21 +2,21 @@
 
 **Simple GitHub release installer.**
 
-A Node.js CLI tool that automatically downloads and installs GitHub release binaries for your platform without requiring manual CLI installation.
+A Node.js CLI to automatically download and install GitHub release binaries for your platform.  
+Helpful for installing non-npm tools.
 
 ## Features
 
-- 🎯 **Automatic platform detection** - Detects your OS and architecture
-- 🔍 **Smart asset matching** - Finds the right binary for your platform
-- 📥 **Download & extract** - Handles `.tar.gz` and `.zip` archives
-- ⚡ **Zero dependencies** - Uses built-in Node.js modules
-- 🔧 **Configurable** - CLI options and package.json configuration
-- 🌍 **Cross-platform** - Works on macOS, Linux, and Windows
+- **Automatically detect** OS and architecture
+- **Download & extract** `.tar.gz` and `.zip` archives
+- **Configurable** platform mappings, binary name, output dir
+- **Zero dependencies** (requires Node.js 22+)
+- **Cross-platform**
 
 ## Installation
 
 ```bash
-npm install -g release-installer
+npm i release-installer
 ```
 
 ## Usage
@@ -48,6 +48,7 @@ Options:
   -h, --help                  Show this help message
 ```
 
+<!--
 ### Package.json Configuration
 
 You can also configure releases in your `package.json`:
@@ -63,10 +64,11 @@ You can also configure releases in your `package.json`:
   }
 }
 ```
+-->
 
 ## Platform Detection
 
-The tool automatically detects your platform and architecture, then matches against common naming patterns:
+The tool tries to detect your platform and architecture, then matches against common naming patterns:
 
 - **macOS**: `apple-darwin`, `macos`, `darwin`
 - **Linux**: `linux-gnu`, `linux`, `unknown-linux`
@@ -92,29 +94,12 @@ release-installer owner/repo v1.0.0 --output=./tools
 release-installer owner/repo v1.0.0 --platform-map='{"darwin-x64":"app-macos.tar.gz"}'
 ```
 
-## Error Handling
-
-The tool provides clear error messages for common issues:
-
-- Repository or release not found
-- No matching asset for your platform
-- Download or extraction failures
-- Permission errors
-
 ## Development
 
 ```bash
-# Clone and install
-git clone https://github.com/tbeseda/release-installer.git
-cd release-installer
 npm install
 
-# Build
 npm run build
 
-# Run tests
 npm test
-
-# Lint
-npm run lint
 ```

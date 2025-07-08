@@ -23,10 +23,7 @@ const mockReleaseData = {
 describe('GitHub API Integration', () => {
   test('fetchReleaseInfo returns release data for valid repo/version', async (t) => {
     t.mock.method(global, 'fetch', async (url: string) => {
-      if (
-        url ===
-        'https://api.github.com/repos/getzola/zola/releases/tags/v0.20.0'
-      ) {
+      if (url === 'https://api.github.com/repos/getzola/zola/releases/tags/v0.20.0') {
         return {
           ok: true,
           json: async () => mockReleaseData,

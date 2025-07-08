@@ -19,10 +19,7 @@ describe('Archive Extraction', () => {
       await extractArchive(archivePath, testDir)
     } catch (error) {
       // Expected to fail with gzip/tar error from our native implementation
-      assert.match(
-        (error as Error).message,
-        /tar command failed|Failed to extract|incorrect header check/,
-      )
+      assert.match((error as Error).message, /tar command failed|Failed to extract|incorrect header check/)
     }
 
     // Clean up
@@ -43,10 +40,7 @@ describe('Archive Extraction', () => {
       await extractArchive(archivePath, testDir)
     } catch (error) {
       // Expected to fail with unzip command error
-      assert.match(
-        (error as Error).message,
-        /unzip command failed|Failed to extract/,
-      )
+      assert.match((error as Error).message, /unzip command failed|Failed to extract/)
     }
 
     // Clean up
@@ -60,10 +54,7 @@ describe('Archive Extraction', () => {
     await mkdir(testDir, { recursive: true })
     await writeFile(archivePath, Buffer.from('mock-content'))
 
-    await assert.rejects(
-      async () => await extractArchive(archivePath, testDir),
-      /Unsupported archive format/,
-    )
+    await assert.rejects(async () => await extractArchive(archivePath, testDir), /Unsupported archive format/)
 
     // Clean up
     await rm(testDir, { recursive: true })
@@ -78,12 +69,12 @@ describe('Archive Extraction', () => {
 
     try {
       await extractArchive(archivePath, testDir)
-    } catch (_error) {
+    } catch {
       // Expected to fail, but directory should be created
       try {
         await access(testDir)
         // Directory exists, test passed
-      } catch (_accessError) {
+      } catch {
         assert.fail('Output directory was not created')
       }
     }

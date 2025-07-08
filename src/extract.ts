@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { access } from 'node:fs/promises'
+import { access, mkdir } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { createGunzip } from 'node:zlib'
@@ -22,16 +22,10 @@ function parseTarHeader(buffer: Buffer): TarHeader | null {
   // Extract filename (first 100 bytes, null-terminated)
   const nameBytes = buffer.subarray(0, 100)
   const nameEnd = nameBytes.indexOf(0)
-  const name = nameBytes
-    .subarray(0, nameEnd > 0 ? nameEnd : 100)
-    .toString('utf8')
+  const name = nameBytes.subarray(0, nameEnd > 0 ? nameEnd : 100).toString('utf8')
 
   // Extract file size (12 bytes at offset 124, octal format)
-  const sizeStr = buffer
-    .subarray(124, 136)
-    .toString('utf8')
-    .trim()
-    .replace(/\0/g, '')
+  const sizeStr = buffer.subarray(124, 136).toString('utf8').trim().replace(/\0/g, '')
   const size = sizeStr ? parseInt(sizeStr, 8) : 0
 
   // Extract file type (1 byte at offset 156)
@@ -41,10 +35,7 @@ function parseTarHeader(buffer: Buffer): TarHeader | null {
   return { name, size, type }
 }
 
-export async function extractTarGz(
-  archivePath: string,
-  outputDir: string,
-): Promise<void> {
+export async function extractTarGz(archivePath: string, outputDir: string): Promise<void> {
   const resolvedArchivePath = resolve(archivePath)
   const resolvedOutputDir = resolve(outputDir)
 
@@ -54,8 +45,7 @@ export async function extractTarGz(
     throw new Error(`Archive file does not exist: ${resolvedArchivePath}`)
   }
 
-  const fs = await import('node:fs/promises')
-  await fs.mkdir(resolvedOutputDir, { recursive: true })
+  await mkdir(resolvedOutputDir, { recursive: true })
 
   // Create streams for decompression
   const readStream = createReadStream(resolvedArchivePath)
@@ -84,9 +74,7 @@ export async function extractTarGz(
       // Process any queued chunks
       while (chunks.length > 0) {
         const nextChunk = chunks.shift()
-        if (nextChunk) {
-          buffer = Buffer.concat([buffer, nextChunk])
-        }
+        if (nextChunk) buffer = Buffer.concat([buffer, nextChunk])
       }
 
       try {
@@ -105,7 +93,7 @@ export async function extractTarGz(
               const outputPath = join(resolvedOutputDir, header.name)
 
               // Ensure directory exists
-              await fs.mkdir(dirname(outputPath), { recursive: true })
+              await mkdir(dirname(outputPath), { recursive: true })
               currentFile.stream = createWriteStream(outputPath)
             }
 
@@ -182,10 +170,7 @@ export async function extractTarGz(
   })
 }
 
-export async function extractZip(
-  archivePath: string,
-  outputDir: string,
-): Promise<void> {
+export async function extractZip(archivePath: string, outputDir: string): Promise<void> {
   // Validate paths to prevent command injection
   const resolvedArchivePath = resolve(archivePath)
   const resolvedOutputDir = resolve(outputDir)
@@ -196,8 +181,7 @@ export async function extractZip(
     throw new Error(`Archive file does not exist: ${resolvedArchivePath}`)
   }
 
-  const fs = await import('node:fs/promises')
-  await fs.mkdir(resolvedOutputDir, { recursive: true })
+  await mkdir(resolvedOutputDir, { recursive: true })
 
   // Try multiple zip extraction tools for better compatibility
   const zipTools = [
@@ -221,10 +205,7 @@ export async function extractZip(
   for (const tool of zipTools) {
     try {
       await new Promise<void>((resolve, reject) => {
-        const proc = spawn(tool.command, tool.args, {
-          stdio: ['ignore', 'pipe', 'pipe'],
-        })
-
+        const proc = spawn(tool.command, tool.args, { stdio: ['ignore', 'pipe', 'pipe'] })
         let stderr = ''
 
         proc.stderr?.on('data', (data) => {
@@ -235,9 +216,7 @@ export async function extractZip(
           if (code === 0) {
             resolve()
           } else {
-            reject(
-              new Error(`${tool.command} failed with code ${code}: ${stderr}`),
-            )
+            reject(new Error(`${tool.command} failed with code ${code}: ${stderr}`))
           }
         })
 
@@ -248,21 +227,15 @@ export async function extractZip(
 
       // If we get here, extraction succeeded
       return
-    } catch (_error) {}
+    } catch {}
   }
 
   // If all tools failed
-  throw new Error(
-    'Failed to extract zip file. Please ensure unzip, PowerShell, or 7z is available on your system.',
-  )
+  throw new Error('Failed to extract zip file. Please ensure unzip, PowerShell, or 7z is available on your system.')
 }
 
-export async function extractArchive(
-  archivePath: string,
-  outputDir: string,
-): Promise<void> {
-  const fs = await import('node:fs/promises')
-  await fs.mkdir(outputDir, { recursive: true })
+export async function extractArchive(archivePath: string, outputDir: string): Promise<void> {
+  await mkdir(outputDir, { recursive: true })
 
   if (archivePath.endsWith('.tar.gz') || archivePath.endsWith('.tgz')) {
     await extractTarGz(archivePath, outputDir)

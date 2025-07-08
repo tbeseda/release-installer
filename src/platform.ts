@@ -17,10 +17,7 @@ export function getPlatformInfo(): PlatformInfo {
   }
 }
 
-export function matchAssetName(
-  assetName: string,
-  platformInfo: PlatformInfo,
-): boolean {
+export function matchAssetName(assetName: string, platformInfo: PlatformInfo): boolean {
   const name = assetName.toLowerCase()
   const { platform: p, arch: a } = platformInfo
 
@@ -38,21 +35,13 @@ export function matchAssetName(
     arm: ['armv7', 'arm'],
   }
 
-  const platformMatch = platformPatterns[
-    p as keyof typeof platformPatterns
-  ]?.some((pattern) => name.includes(pattern))
-
-  const archMatch = archPatterns[a as keyof typeof archPatterns]?.some(
-    (pattern) => name.includes(pattern),
-  )
+  const platformMatch = platformPatterns[p as keyof typeof platformPatterns]?.some((pattern) => name.includes(pattern))
+  const archMatch = archPatterns[a as keyof typeof archPatterns]?.some((pattern) => name.includes(pattern))
 
   return Boolean(platformMatch && archMatch)
 }
 
-export function findBestAsset(
-  assets: string[],
-  platformInfo: PlatformInfo,
-): string | null {
+export function findBestAsset(assets: string[], platformInfo: PlatformInfo): string | null {
   const matches = assets.filter((asset) => matchAssetName(asset, platformInfo))
 
   if (matches.length === 0) return null

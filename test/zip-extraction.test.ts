@@ -26,10 +26,7 @@ describe('Enhanced Zip Extraction Fallbacks', () => {
     const nonExistentPath = './nonexistent/file.zip'
     const outputDir = './test-zip-nonexistent'
 
-    await assert.rejects(
-      async () => await extractZip(nonExistentPath, outputDir),
-      /Archive file does not exist/,
-    )
+    await assert.rejects(async () => await extractZip(nonExistentPath, outputDir), /Archive file does not exist/)
   })
 
   test('creates output directory if it does not exist', async () => {

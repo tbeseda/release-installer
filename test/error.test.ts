@@ -65,7 +65,7 @@ describe('Error Handling', () => {
             [currentPlatform.combined]: 'nonexistent-asset.tar.gz',
           },
         }),
-      /Asset nonexistent-asset.tar.gz not found in release/,
+      /Release asset nonexistent-asset.tar.gz not found in release/,
     )
   })
 
@@ -114,7 +114,7 @@ describe('Error Handling', () => {
             [currentPlatform.combined]: 'nonexistent-file.tar.gz',
           },
         }),
-      /Asset nonexistent-file.tar.gz not found in release/,
+      /Release asset nonexistent-file.tar.gz not found in release/,
     )
   })
 
@@ -156,8 +156,7 @@ describe('Error Handling', () => {
           await installRelease('test/app', 'v0.20.0', {
             outputDir: testDir,
             platformMap: {
-              [currentPlatform.combined]:
-                'test-app-v0.20.0-x86_64-apple-darwin.tar.gz',
+              [currentPlatform.combined]: 'test-app-v0.20.0-x86_64-apple-darwin.tar.gz',
             },
           }),
         /Binary .* already exists. Use --force to overwrite./,
@@ -214,8 +213,7 @@ describe('Error Handling', () => {
           await installRelease('test/app', 'v0.20.0', {
             outputDir: testDir,
             platformMap: {
-              [currentPlatform.combined]:
-                'test-app-v0.20.0-x86_64-apple-darwin.tar.gz',
+              [currentPlatform.combined]: 'test-app-v0.20.0-x86_64-apple-darwin.tar.gz',
             },
           }),
         // Should fail during extraction but still clean up
@@ -227,10 +225,7 @@ describe('Error Handling', () => {
       // Verify archive was cleaned up (temp file shouldn't exist)
       const { access } = await import('node:fs/promises')
       const { join } = await import('node:path')
-      const tempPath = join(
-        testDir,
-        'test-app-v0.20.0-x86_64-apple-darwin.tar.gz',
-      )
+      const tempPath = join(testDir, 'test-app-v0.20.0-x86_64-apple-darwin.tar.gz')
 
       await assert.rejects(
         async () => await access(tempPath),

@@ -78,10 +78,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     const nonExistentPath = './nonexistent/file.tar.gz'
     const outputDir = './test-nonexistent'
 
-    await assert.rejects(
-      async () => await extractTarGz(nonExistentPath, outputDir),
-      /Archive file does not exist/,
-    )
+    await assert.rejects(async () => await extractTarGz(nonExistentPath, outputDir), /Archive file does not exist/)
   })
 
   test('handles tar with directories and files', async () => {
@@ -127,12 +124,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
     // End of archive (two zero blocks)
     const endOfArchive = Buffer.alloc(1024)
 
-    const tarData = Buffer.concat([
-      tarHeader,
-      fileContent,
-      filePadding,
-      endOfArchive,
-    ])
+    const tarData = Buffer.concat([tarHeader, fileContent, filePadding, endOfArchive])
 
     const readableStream = Readable.from([tarData])
     const gzipStream = createGzip()
@@ -145,10 +137,7 @@ describe('Native tar.gz Extraction Edge Cases', () => {
 
       // Verify file was extracted
       const { readFile } = await import('node:fs/promises')
-      const extractedContent = await readFile(
-        join(outputDir, 'test.txt'),
-        'utf8',
-      )
+      const extractedContent = await readFile(join(outputDir, 'test.txt'), 'utf8')
       assert.equal(extractedContent, 'Hello, world!')
     } finally {
       await rm(testDir, { recursive: true }).catch(() => {})

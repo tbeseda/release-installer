@@ -36,13 +36,7 @@ describe('CLI Argument Parsing', () => {
 
   test('parseArgs handles long flags', () => {
     const { values } = parseArgs({
-      args: [
-        '--bin-name',
-        'custom-bin',
-        '--output',
-        './custom-output',
-        '--verbose',
-      ],
+      args: ['--bin-name', 'custom-bin', '--output', './custom-output', '--verbose'],
       options: {
         'bin-name': { type: 'string', short: 'b' },
         output: { type: 'string', short: 'o' },
