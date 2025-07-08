@@ -17,7 +17,7 @@ describe('Streaming Download Error Handling', () => {
     try {
       await assert.rejects(
         async () => await downloadAsset('https://example.com/file.tar.gz', './test-null-body.tar.gz'),
-        /Response body is empty/,
+        /GitHub API response body is empty/,
       )
     } finally {
       global.fetch = originalFetch
@@ -38,7 +38,7 @@ describe('Streaming Download Error Handling', () => {
     try {
       await assert.rejects(
         async () => await downloadAsset('https://example.com/file.tar.gz', './test-undefined-body.tar.gz'),
-        /Response body is empty/,
+        /GitHub API response body is empty/,
       )
     } finally {
       global.fetch = originalFetch
